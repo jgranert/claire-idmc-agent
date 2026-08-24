@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+
+# Credentials and secrets
+.env
+*.pem
+*.key
+
+# Cache files
+scripts/.cache_*.json
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
