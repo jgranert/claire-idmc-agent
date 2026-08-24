@@ -506,7 +506,10 @@ class MCPProxy:
             async with client:
                 async with streamable_http_client(
                     self.mcp_url, http_client=client, terminate_on_close=False
-                ) as (read, write, _):
+                ) as streams:
+                    # mcp <0.9 yields (read, write, get_session_id); newer yields (read, write).
+                    # Take the first two regardless of tuple arity.
+                    read, write = streams[0], streams[1]
                     yield read, write
 
         return _ctx()
@@ -674,7 +677,10 @@ class MCPProxy:
                         {
                             "name":        t.name,
                             "description": t.description or "",
-                            "inputSchema": t.inputSchema or {},
+                            # mcp renamed inputSchema -> input_schema in newer versions
+                            "inputSchema": getattr(t, "inputSchema", None)
+                                           or getattr(t, "input_schema", None)
+                                           or {},
                         }
                         for t in result.tools
                     ]
