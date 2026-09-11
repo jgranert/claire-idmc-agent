@@ -37,6 +37,26 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
 
+# ── load .env from project root (scripts/../.env) — before any config reads ───
+def _load_env() -> None:
+    try:
+        from dotenv import load_dotenv as _load_dotenv
+    except ImportError:
+        return  # dotenv optional; env vars must already be set
+    # Try <project_root>/.env (i.e. one level above this script's directory)
+    _here = os.path.dirname(os.path.abspath(__file__))
+    for candidate in (
+        os.path.join(os.path.dirname(_here), ".env"),  # ../. env  (normal)
+        os.path.join(_here, ".env"),                   # same dir fallback
+    ):
+        if os.path.isfile(candidate):
+            _load_dotenv(candidate)
+            print(f"[claire] Loaded .env from {candidate}", file=sys.stderr, flush=True)
+            return
+    print("[claire] WARNING: no .env file found; relying on environment variables", file=sys.stderr, flush=True)
+
+_load_env()
+
 # ── line-buffered I/O (stdout = MCP JSON-RPC, stderr = diagnostics) ────────────
 # Force UTF-8 on Windows so unicode log chars (→ etc.) don't crash on cp1252 stderr.
 sys.stdout = open(sys.stdout.fileno(), "w", buffering=1, encoding="utf-8", closefd=False)
@@ -90,6 +110,11 @@ def _config_path() -> str:
             "~/Library/Application Support/Claude/claude_desktop_config.json"
         )
     if sys.platform == "win32":
+        # CCD (Claude-3p) takes precedence; fall back to standard Claude Desktop path
+        local = os.environ.get("LOCALAPPDATA", "")
+        ccd_path = os.path.join(local, "Claude-3p", "claude_desktop_config.json")
+        if os.path.exists(ccd_path):
+            return ccd_path
         return os.path.join(
             os.environ.get("APPDATA", ""), "Claude", "claude_desktop_config.json"
         )
@@ -669,6 +694,7 @@ class MCPProxy:
     async def _list_tools(self, msg_id) -> dict:
         from mcp import ClientSession
         try:
+            await self._ensure_ready()
             async with self._sdk_session() as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()

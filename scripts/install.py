@@ -38,7 +38,7 @@ CLAIRE_API_URL = "https://claire-gpt-api.rel.infaqa.com"
 # ── Skill folder name as it lives inside Claude Desktop's skills directory ─────
 SKILL_FOLDER_NAME = "claire-idmc-agent"
 
-MCP_PACKAGES = ["mcp"]
+MCP_PACKAGES = ["mcp", "python-dotenv"]
 
 
 # ── Platform paths ────────────────────────────────────────────────────────────

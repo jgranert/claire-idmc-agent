@@ -3,6 +3,7 @@
 
 # Credentials and secrets
 .env
+*.env
 *.pem
 *.key
 
